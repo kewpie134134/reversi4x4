@@ -20,6 +20,11 @@
   padding: 0;
 }
 
+.cell.valid {
+  box-shadow: 0 0 0 3px #ff0 inset;
+  background: #6fa;
+}
+
 .stone {
   width: 28px;
   height: 28px;

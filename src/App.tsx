@@ -84,6 +84,18 @@ function countStones(board: BoardType) {
   return { black, white };
 }
 
+function getValidMoves(board: BoardType, player: "black" | "white") {
+  const moves: [number, number][] = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (getFlippable(board, r, c, player).length > 0) {
+        moves.push([r, c]);
+      }
+    }
+  }
+  return moves;
+}
+
 function App() {
   const [board, setBoard] = useState<BoardType>(getInitialBoard());
   const [currentPlayer, setCurrentPlayer] = useState<"black" | "white">(
@@ -91,9 +103,11 @@ function App() {
   );
   const [score, setScore] = useState(countStones(getInitialBoard()));
 
+  const validMoves = getValidMoves(board, currentPlayer);
+
   const handleCellClick = (row: number, col: number) => {
     const toFlip = getFlippable(board, row, col, currentPlayer);
-    if (toFlip.length === 0) return; // 挟めない場合は無効
+    if (toFlip.length === 0) return;
 
     const newBoard = board.map((r) => r.slice());
     newBoard[row][col] = currentPlayer;
@@ -109,7 +123,11 @@ function App() {
     <div className="app">
       <h1>4x4 Reversi Game</h1>
       <ScoreBoard score={score} currentPlayer={currentPlayer} />
-      <Board board={board} onCellClick={handleCellClick} />
+      <Board
+        board={board}
+        onCellClick={handleCellClick}
+        validMoves={validMoves}
+      />
     </div>
   );
 }
