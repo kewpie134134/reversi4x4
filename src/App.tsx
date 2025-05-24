@@ -206,7 +206,6 @@ function App() {
     setScore(countStones(getInitialBoard()));
     setGameOver(false);
     setAnimate(false);
-    // eslint-disable-next-line
   }, [mode, cpuColor]);
 
   let resultMsg = "";
