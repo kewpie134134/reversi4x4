@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Board from "./components/Board";
 import ScoreBoard from "./components/ScoreBoard";
 import "./App.css";
@@ -96,16 +96,38 @@ function getValidMoves(board: BoardType, player: "black" | "white") {
   return moves;
 }
 
+function isGameOver(board: BoardType) {
+  // どちらも置ける場所がなければ終了
+  return (
+    getValidMoves(board, "black").length === 0 &&
+    getValidMoves(board, "white").length === 0
+  );
+}
+
 function App() {
   const [board, setBoard] = useState<BoardType>(getInitialBoard());
   const [currentPlayer, setCurrentPlayer] = useState<"black" | "white">(
     "black"
   );
   const [score, setScore] = useState(countStones(getInitialBoard()));
+  const [gameOver, setGameOver] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   const validMoves = getValidMoves(board, currentPlayer);
 
+  useEffect(() => {
+    if (isGameOver(board)) {
+      setGameOver(true);
+      setAnimate(true);
+      // 2秒後にアニメーションを消す
+      setTimeout(() => setAnimate(false), 2000);
+    } else {
+      setGameOver(false);
+    }
+  }, [board]);
+
   const handleCellClick = (row: number, col: number) => {
+    if (gameOver) return;
     const toFlip = getFlippable(board, row, col, currentPlayer);
     if (toFlip.length === 0) return;
 
@@ -119,15 +141,35 @@ function App() {
     setCurrentPlayer(currentPlayer === "black" ? "white" : "black");
   };
 
+  const handleReset = () => {
+    setBoard(getInitialBoard());
+    setCurrentPlayer("black");
+    setScore(countStones(getInitialBoard()));
+    setGameOver(false);
+    setAnimate(false);
+  };
+
+  // 勝敗メッセージ
+  let resultMsg = "";
+  if (gameOver) {
+    if (score.black > score.white) resultMsg = "黒の勝ち！";
+    else if (score.white > score.black) resultMsg = "白の勝ち！";
+    else resultMsg = "引き分け！";
+  }
+
   return (
     <div className="app">
       <h1>4x4 Reversi Game</h1>
+      <button onClick={handleReset}>最初から始める</button>
       <ScoreBoard score={score} currentPlayer={currentPlayer} />
-      <Board
-        board={board}
-        onCellClick={handleCellClick}
-        validMoves={validMoves}
-      />
+      <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
+        <Board
+          board={board}
+          onCellClick={handleCellClick}
+          validMoves={validMoves}
+        />
+      </div>
+      {gameOver && <div className="result">{resultMsg}</div>}
     </div>
   );
 }
