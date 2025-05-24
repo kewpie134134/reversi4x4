@@ -2,102 +2,14 @@ import { useEffect, useState } from "react";
 import Board from "./components/Board";
 import ScoreBoard from "./components/ScoreBoard";
 import "./App.css";
-
-type Cell = "black" | "white" | null;
-type BoardType = Cell[][];
-
-const BOARD_SIZE = 4;
-
-function getInitialBoard(): BoardType {
-  const board: BoardType = Array(BOARD_SIZE)
-    .fill(null)
-    .map(() => Array(BOARD_SIZE).fill(null));
-  board[1][1] = "white";
-  board[2][2] = "white";
-  board[1][2] = "black";
-  board[2][1] = "black";
-  return board;
-}
-
-const directions = [
-  [0, 1],
-  [1, 0],
-  [0, -1],
-  [-1, 0],
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-];
-
-function getFlippable(
-  board: BoardType,
-  row: number,
-  col: number,
-  player: "black" | "white"
-) {
-  if (board[row][col] !== null) return [];
-  const opponent = player === "black" ? "white" : "black";
-  let toFlip: [number, number][] = [];
-  for (const [dx, dy] of directions) {
-    let r = row + dx;
-    let c = col + dy;
-    const temp: [number, number][] = [];
-    while (
-      r >= 0 &&
-      r < BOARD_SIZE &&
-      c >= 0 &&
-      c < BOARD_SIZE &&
-      board[r][c] === opponent
-    ) {
-      temp.push([r, c]);
-      r += dx;
-      c += dy;
-    }
-    if (
-      temp.length > 0 &&
-      r >= 0 &&
-      r < BOARD_SIZE &&
-      c >= 0 &&
-      c < BOARD_SIZE &&
-      board[r][c] === player
-    ) {
-      toFlip = toFlip.concat(temp);
-    }
-  }
-  return toFlip;
-}
-
-function countStones(board: BoardType) {
-  let black = 0,
-    white = 0;
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      if (board[r][c] === "black") black++;
-      if (board[r][c] === "white") white++;
-    }
-  }
-  return { black, white };
-}
-
-function getValidMoves(board: BoardType, player: "black" | "white") {
-  const moves: [number, number][] = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      if (getFlippable(board, r, c, player).length > 0) {
-        moves.push([r, c]);
-      }
-    }
-  }
-  return moves;
-}
-
-function isGameOver(board: BoardType) {
-  return (
-    getValidMoves(board, "black").length === 0 &&
-    getValidMoves(board, "white").length === 0
-  );
-}
+import {
+  getInitialBoard,
+  getFlippable,
+  countStones,
+  getValidMoves,
+  isGameOver,
+} from "./utils/reversiLogic";
+import type { BoardType } from "./utils/reversiLogic";
 
 type Mode = "human" | "cpu";
 type CpuLevel = "easy" | "hard";

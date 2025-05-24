@@ -1,127 +1,98 @@
-const BOARD_SIZE = 4;
-const EMPTY = 0;
-const BLACK = 1;
-const WHITE = 2;
+export const BOARD_SIZE = 4;
 
-type Cell = {
-  row: number;
-  col: number;
-};
+export type Cell = "black" | "white" | null;
+export type BoardType = Cell[][];
 
-type Board = number[][];
-
-export const initializeBoard = (): Board => {
-  const board: Board = Array.from({ length: BOARD_SIZE }, () =>
-    Array(BOARD_SIZE).fill(EMPTY)
-  );
-  board[1][1] = WHITE;
-  board[1][2] = BLACK;
-  board[2][1] = BLACK;
-  board[2][2] = WHITE;
+export function getInitialBoard(): BoardType {
+  const board: BoardType = Array(BOARD_SIZE)
+    .fill(null)
+    .map(() => Array(BOARD_SIZE).fill(null));
+  board[1][1] = "white";
+  board[2][2] = "white";
+  board[1][2] = "black";
+  board[2][1] = "black";
   return board;
-};
+}
 
-export const isValidMove = (
-  board: Board,
-  cell: Cell,
-  player: number
-): boolean => {
-  if (board[cell.row][cell.col] !== EMPTY) return false;
+export const directions = [
+  [0, 1],
+  [1, 0],
+  [0, -1],
+  [-1, 0],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
 
-  const opponent = player === BLACK ? WHITE : BLACK;
-  const directions = [
-    { row: -1, col: 0 },
-    { row: 1, col: 0 },
-    { row: 0, col: -1 },
-    { row: 0, col: 1 },
-    { row: -1, col: -1 },
-    { row: -1, col: 1 },
-    { row: 1, col: -1 },
-    { row: 1, col: 1 },
-  ];
-
-  for (const { row, col } of directions) {
-    let r = cell.row + row;
-    let c = cell.col + col;
-    let foundOpponent = false;
-
-    while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
-      if (board[r][c] === opponent) {
-        foundOpponent = true;
-      } else if (board[r][c] === player) {
-        if (foundOpponent) return true;
-        break;
-      } else {
-        break;
-      }
-      r += row;
-      c += col;
+export function getFlippable(
+  board: BoardType,
+  row: number,
+  col: number,
+  player: "black" | "white"
+): [number, number][] {
+  if (board[row][col] !== null) return [];
+  const opponent = player === "black" ? "white" : "black";
+  let toFlip: [number, number][] = [];
+  for (const [dx, dy] of directions) {
+    let r = row + dx;
+    let c = col + dy;
+    const temp: [number, number][] = [];
+    while (
+      r >= 0 &&
+      r < BOARD_SIZE &&
+      c >= 0 &&
+      c < BOARD_SIZE &&
+      board[r][c] === opponent
+    ) {
+      temp.push([r, c]);
+      r += dx;
+      c += dy;
+    }
+    if (
+      temp.length > 0 &&
+      r >= 0 &&
+      r < BOARD_SIZE &&
+      c >= 0 &&
+      c < BOARD_SIZE &&
+      board[r][c] === player
+    ) {
+      toFlip = toFlip.concat(temp);
     }
   }
-  return false;
-};
+  return toFlip;
+}
 
-export const makeMove = (board: Board, cell: Cell, player: number): Board => {
-  const newBoard = board.map((row) => [...row]);
-  newBoard[cell.row][cell.col] = player;
-
-  const opponent = player === BLACK ? WHITE : BLACK;
-  const directions = [
-    { row: -1, col: 0 },
-    { row: 1, col: 0 },
-    { row: 0, col: -1 },
-    { row: 0, col: 1 },
-    { row: -1, col: -1 },
-    { row: -1, col: 1 },
-    { row: 1, col: -1 },
-    { row: 1, col: 1 },
-  ];
-
-  for (const { row, col } of directions) {
-    let r = cell.row + row;
-    let c = cell.col + col;
-    const cellsToFlip: Cell[] = [];
-
-    while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
-      if (newBoard[r][c] === opponent) {
-        cellsToFlip.push({ row: r, col: c });
-      } else if (newBoard[r][c] === player) {
-        for (const { row: flipRow, col: flipCol } of cellsToFlip) {
-          newBoard[flipRow][flipCol] = player;
-        }
-        break;
-      } else {
-        break;
-      }
-      r += row;
-      c += col;
+export function countStones(board: BoardType) {
+  let black = 0,
+    white = 0;
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[r][c] === "black") black++;
+      if (board[r][c] === "white") white++;
     }
   }
-  return newBoard;
-};
-
-export const getValidMoves = (board: Board, player: number): Cell[] => {
-  const validMoves: Cell[] = [];
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    for (let col = 0; col < BOARD_SIZE; col++) {
-      if (isValidMove(board, { row, col }, player)) {
-        validMoves.push({ row, col });
-      }
-    }
-  }
-  return validMoves;
-};
-
-export const countScores = (board: Board): { black: number; white: number } => {
-  let black = 0;
-  let white = 0;
-
-  for (const row of board) {
-    for (const cell of row) {
-      if (cell === BLACK) black++;
-      else if (cell === WHITE) white++;
-    }
-  }
-
   return { black, white };
-};
+}
+
+export function getValidMoves(
+  board: BoardType,
+  player: "black" | "white"
+): [number, number][] {
+  const moves: [number, number][] = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (getFlippable(board, r, c, player).length > 0) {
+        moves.push([r, c]);
+      }
+    }
+  }
+  return moves;
+}
+
+export function isGameOver(board: BoardType): boolean {
+  return (
+    getValidMoves(board, "black").length === 0 &&
+    getValidMoves(board, "white").length === 0
+  );
+}
