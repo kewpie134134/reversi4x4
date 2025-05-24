@@ -215,6 +215,8 @@ function App() {
     else resultMsg = "引き分け！";
   }
 
+  const playerName = currentPlayer === "black" ? "黒" : "白";
+
   return (
     <div className="app">
       <h1>4x4 オセロゲーム</h1>
@@ -254,7 +256,7 @@ function App() {
         )}
       </div>
       <button onClick={handleReset}>最初から始める</button>
-      <ScoreBoard score={score} currentPlayer={currentPlayer} />
+      <ScoreBoard score={score} currentPlayer={playerName} />
       <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
         <Board
           board={board}
