@@ -1,42 +1,58 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* 盤面を中央に配置し、セル同士の隙間を小さくする */
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 90px);
+  grid-template-rows: repeat(4, 90px);
+  gap: 2px;
+  justify-content: center;
+  margin: 20px auto;
+}
+
+.cell {
+  width: 90px;
+  height: 90px;
+  background: #2e8b57;
+  border: 1px solid #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cell.valid {
+  box-shadow: 0 0 0 3px #ff0 inset;
+  background: #6fa;
+}
+
+.stone {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #000;
+}
+
+.stone.white {
+  background: #fff;
+  border: 1px solid #aaa;
+}
+
+.board-wrapper.gameover-animate {
+  animation: winner-flash 2s;
+}
+
+@keyframes winner-flash {
+  0%   { box-shadow: 0 0 0px 0px #ffd700; }
+  20%  { box-shadow: 0 0 40px 10px #ffd700; }
+  50%  { box-shadow: 0 0 80px 20px #ffd700; }
+  80%  { box-shadow: 0 0 40px 10px #ffd700; }
+  100% { box-shadow: 0 0 0px 0px #ffd700; }
+}
+
+.result {
+  font-size: 2em;
+  font-weight: bold;
+  color: #ffd700;
   text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  margin-top: 20px;
 }

@@ -1,35 +1,278 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import Board from "./components/Board";
+import ScoreBoard from "./components/ScoreBoard";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+type Cell = "black" | "white" | null;
+type BoardType = Cell[][];
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+const BOARD_SIZE = 4;
+
+function getInitialBoard(): BoardType {
+  const board: BoardType = Array(BOARD_SIZE)
+    .fill(null)
+    .map(() => Array(BOARD_SIZE).fill(null));
+  board[1][1] = "white";
+  board[2][2] = "white";
+  board[1][2] = "black";
+  board[2][1] = "black";
+  return board;
 }
 
-export default App
+const directions = [
+  [0, 1],
+  [1, 0],
+  [0, -1],
+  [-1, 0],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
+
+function getFlippable(
+  board: BoardType,
+  row: number,
+  col: number,
+  player: "black" | "white"
+) {
+  if (board[row][col] !== null) return [];
+  const opponent = player === "black" ? "white" : "black";
+  let toFlip: [number, number][] = [];
+  for (const [dx, dy] of directions) {
+    let r = row + dx;
+    let c = col + dy;
+    const temp: [number, number][] = [];
+    while (
+      r >= 0 &&
+      r < BOARD_SIZE &&
+      c >= 0 &&
+      c < BOARD_SIZE &&
+      board[r][c] === opponent
+    ) {
+      temp.push([r, c]);
+      r += dx;
+      c += dy;
+    }
+    if (
+      temp.length > 0 &&
+      r >= 0 &&
+      r < BOARD_SIZE &&
+      c >= 0 &&
+      c < BOARD_SIZE &&
+      board[r][c] === player
+    ) {
+      toFlip = toFlip.concat(temp);
+    }
+  }
+  return toFlip;
+}
+
+function countStones(board: BoardType) {
+  let black = 0,
+    white = 0;
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[r][c] === "black") black++;
+      if (board[r][c] === "white") white++;
+    }
+  }
+  return { black, white };
+}
+
+function getValidMoves(board: BoardType, player: "black" | "white") {
+  const moves: [number, number][] = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (getFlippable(board, r, c, player).length > 0) {
+        moves.push([r, c]);
+      }
+    }
+  }
+  return moves;
+}
+
+function isGameOver(board: BoardType) {
+  return (
+    getValidMoves(board, "black").length === 0 &&
+    getValidMoves(board, "white").length === 0
+  );
+}
+
+type Mode = "human" | "cpu";
+type CpuLevel = "easy" | "hard";
+
+function App() {
+  const [board, setBoard] = useState<BoardType>(getInitialBoard());
+  const [currentPlayer, setCurrentPlayer] = useState<"black" | "white">(
+    "black"
+  );
+  const [score, setScore] = useState(countStones(getInitialBoard()));
+  const [gameOver, setGameOver] = useState(false);
+  const [animate, setAnimate] = useState(false);
+  const [mode, setMode] = useState<Mode>("cpu");
+  const [cpuColor, setCpuColor] = useState<"black" | "white">("white");
+  const [cpuLevel, setCpuLevel] = useState<CpuLevel>("easy");
+
+  const validMoves = getValidMoves(board, currentPlayer);
+
+  // 勝敗判定とアニメーション
+  useEffect(() => {
+    if (isGameOver(board)) {
+      setGameOver(true);
+      setAnimate(true);
+      setTimeout(() => setAnimate(false), 2000);
+    } else {
+      setGameOver(false);
+    }
+  }, [board]);
+
+  // 現在の手番がCPUかどうか
+  const isCpuTurn = mode === "cpu" && currentPlayer === cpuColor;
+
+  // コンピュータの自動手番
+  useEffect(() => {
+    if (gameOver) return;
+    if (isCpuTurn) {
+      const moves = getValidMoves(board, cpuColor);
+      if (moves.length > 0) {
+        let row: number, col: number;
+        if (cpuLevel === "easy") {
+          // ランダム
+          [row, col] = moves[Math.floor(Math.random() * moves.length)];
+        } else {
+          // hard: ひっくり返せる数が最大の手を選ぶ
+          let max = -1;
+          let bestMoves: [number, number][] = [];
+          for (const [r, c] of moves) {
+            const flipCount = getFlippable(board, r, c, cpuColor).length;
+            if (flipCount > max) {
+              max = flipCount;
+              bestMoves = [[r, c]];
+            } else if (flipCount === max) {
+              bestMoves.push([r, c]);
+            }
+          }
+          [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        }
+        setTimeout(() => doMove(row, col, cpuColor), 500);
+      } else {
+        // パス
+        setCurrentPlayer(cpuColor === "black" ? "white" : "black");
+      }
+    }
+    // eslint-disable-next-line
+  }, [currentPlayer, board, gameOver, mode, cpuColor, cpuLevel]);
+
+  // 共通の手番処理
+  const doMove = (row: number, col: number, player: "black" | "white") => {
+    const toFlip = getFlippable(board, row, col, player);
+    if (toFlip.length === 0) return;
+
+    const newBoard = board.map((r) => r.slice());
+    newBoard[row][col] = player;
+    toFlip.forEach(([r, c]) => {
+      newBoard[r][c] = player;
+    });
+    setBoard(newBoard);
+    setScore(countStones(newBoard));
+    setCurrentPlayer(player === "black" ? "white" : "black");
+  };
+
+  // クリック時
+  const handleCellClick = (row: number, col: number) => {
+    if (gameOver) return;
+    if (isCpuTurn) return; // CPUの手番はクリック不可
+    doMove(row, col, currentPlayer);
+  };
+
+  const handleReset = () => {
+    setBoard(getInitialBoard());
+    setCurrentPlayer("black");
+    setScore(countStones(getInitialBoard()));
+    setGameOver(false);
+    setAnimate(false);
+  };
+
+  // モード変更時にリセット
+  const handleModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setMode(e.target.value as Mode);
+  };
+
+  useEffect(() => {
+    // モードやCPU色が変わったらリセット
+    setBoard(getInitialBoard());
+    setCurrentPlayer(cpuColor === "black" ? "white" : "black");
+    setScore(countStones(getInitialBoard()));
+    setGameOver(false);
+    setAnimate(false);
+    // eslint-disable-next-line
+  }, [mode, cpuColor]);
+
+  let resultMsg = "";
+  if (gameOver) {
+    if (score.black > score.white) resultMsg = "黒の勝ち！";
+    else if (score.white > score.black) resultMsg = "白の勝ち！";
+    else resultMsg = "引き分け！";
+  }
+
+  return (
+    <div className="app">
+      <h1>4x4 オセロゲーム</h1>
+      <div style={{ marginBottom: 10 }}>
+        <label>
+          対戦モード：
+          <select value={mode} onChange={handleModeChange}>
+            <option value="cpu">人 vs コンピュータ</option>
+            <option value="human">人 vs 人</option>
+          </select>
+        </label>
+        {mode === "cpu" && (
+          <>
+            <label style={{ marginLeft: 10 }}>
+              先攻・後攻：
+              <select
+                value={cpuColor}
+                onChange={(e) =>
+                  setCpuColor(e.target.value as "black" | "white")
+                }
+              >
+                <option value="white">あなたが先攻（黒）</option>
+                <option value="black">あなたが後攻（白）</option>
+              </select>
+            </label>
+            <label style={{ marginLeft: 10 }}>
+              コンピュータの強さ：
+              <select
+                value={cpuLevel}
+                onChange={(e) => setCpuLevel(e.target.value as CpuLevel)}
+              >
+                <option value="easy">ふつう</option>
+                <option value="hard">つよい</option>
+              </select>
+            </label>
+          </>
+        )}
+      </div>
+      <button onClick={handleReset}>最初から始める</button>
+      <ScoreBoard score={score} currentPlayer={currentPlayer} />
+      <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
+        <Board
+          board={board}
+          onCellClick={handleCellClick}
+          validMoves={validMoves}
+        />
+      </div>
+      {gameOver && <div className="result">{resultMsg}</div>}
+      <div style={{ marginTop: 10 }}>
+        {mode === "cpu"
+          ? cpuColor === "white"
+            ? "あなた：黒（先攻）　コンピュータ：白（後攻）"
+            : "あなた：白（後攻）　コンピュータ：黒（先攻）"
+          : "黒：先手　白：後手"}
+      </div>
+    </div>
+  );
+}
+
+export default App;
