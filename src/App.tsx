@@ -100,6 +100,7 @@ function isGameOver(board: BoardType) {
 }
 
 type Mode = "human" | "cpu";
+type CpuLevel = "easy" | "hard";
 
 function App() {
   const [board, setBoard] = useState<BoardType>(getInitialBoard());
@@ -110,6 +111,8 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [animate, setAnimate] = useState(false);
   const [mode, setMode] = useState<Mode>("cpu");
+  const [cpuColor, setCpuColor] = useState<"black" | "white">("white");
+  const [cpuLevel, setCpuLevel] = useState<CpuLevel>("easy");
 
   const validMoves = getValidMoves(board, currentPlayer);
 
@@ -124,22 +127,42 @@ function App() {
     }
   }, [board]);
 
+  // 現在の手番がCPUかどうか
+  const isCpuTurn = mode === "cpu" && currentPlayer === cpuColor;
+
   // コンピュータの自動手番
   useEffect(() => {
     if (gameOver) return;
-    if (mode === "cpu" && currentPlayer === "white") {
-      const moves = getValidMoves(board, "white");
+    if (isCpuTurn) {
+      const moves = getValidMoves(board, cpuColor);
       if (moves.length > 0) {
-        // ランダムに1手選ぶ
-        const [row, col] = moves[Math.floor(Math.random() * moves.length)];
-        setTimeout(() => doMove(row, col, "white"), 500); // 0.5秒待つ
+        let row: number, col: number;
+        if (cpuLevel === "easy") {
+          // ランダム
+          [row, col] = moves[Math.floor(Math.random() * moves.length)];
+        } else {
+          // hard: ひっくり返せる数が最大の手を選ぶ
+          let max = -1;
+          let bestMoves: [number, number][] = [];
+          for (const [r, c] of moves) {
+            const flipCount = getFlippable(board, r, c, cpuColor).length;
+            if (flipCount > max) {
+              max = flipCount;
+              bestMoves = [[r, c]];
+            } else if (flipCount === max) {
+              bestMoves.push([r, c]);
+            }
+          }
+          [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        }
+        setTimeout(() => doMove(row, col, cpuColor), 500);
       } else {
         // パス
-        setCurrentPlayer("black");
+        setCurrentPlayer(cpuColor === "black" ? "white" : "black");
       }
     }
     // eslint-disable-next-line
-  }, [currentPlayer, board, gameOver, mode]);
+  }, [currentPlayer, board, gameOver, mode, cpuColor, cpuLevel]);
 
   // 共通の手番処理
   const doMove = (row: number, col: number, player: "black" | "white") => {
@@ -159,8 +182,7 @@ function App() {
   // クリック時
   const handleCellClick = (row: number, col: number) => {
     if (gameOver) return;
-    // 人vsCPUの場合、白は自動なのでクリック不可
-    if (mode === "cpu" && currentPlayer === "white") return;
+    if (isCpuTurn) return; // CPUの手番はクリック不可
     doMove(row, col, currentPlayer);
   };
 
@@ -175,12 +197,17 @@ function App() {
   // モード変更時にリセット
   const handleModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setMode(e.target.value as Mode);
+  };
+
+  useEffect(() => {
+    // モードやCPU色が変わったらリセット
     setBoard(getInitialBoard());
-    setCurrentPlayer("black");
+    setCurrentPlayer(cpuColor === "black" ? "white" : "black");
     setScore(countStones(getInitialBoard()));
     setGameOver(false);
     setAnimate(false);
-  };
+    // eslint-disable-next-line
+  }, [mode, cpuColor]);
 
   let resultMsg = "";
   if (gameOver) {
@@ -191,7 +218,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>4x4 Reversi Game</h1>
+      <h1>4x4 オセロゲーム</h1>
       <div style={{ marginBottom: 10 }}>
         <label>
           対戦モード：
@@ -200,6 +227,32 @@ function App() {
             <option value="human">人 vs 人</option>
           </select>
         </label>
+        {mode === "cpu" && (
+          <>
+            <label style={{ marginLeft: 10 }}>
+              先攻・後攻：
+              <select
+                value={cpuColor}
+                onChange={(e) =>
+                  setCpuColor(e.target.value as "black" | "white")
+                }
+              >
+                <option value="white">あなたが先攻（黒）</option>
+                <option value="black">あなたが後攻（白）</option>
+              </select>
+            </label>
+            <label style={{ marginLeft: 10 }}>
+              コンピュータの強さ：
+              <select
+                value={cpuLevel}
+                onChange={(e) => setCpuLevel(e.target.value as CpuLevel)}
+              >
+                <option value="easy">ふつう</option>
+                <option value="hard">つよい</option>
+              </select>
+            </label>
+          </>
+        )}
       </div>
       <button onClick={handleReset}>最初から始める</button>
       <ScoreBoard score={score} currentPlayer={currentPlayer} />
@@ -212,7 +265,11 @@ function App() {
       </div>
       {gameOver && <div className="result">{resultMsg}</div>}
       <div style={{ marginTop: 10 }}>
-        {mode === "cpu" ? "あなた：黒　コンピュータ：白" : "黒：先手　白：後手"}
+        {mode === "cpu"
+          ? cpuColor === "white"
+            ? "あなた：黒（先攻）　コンピュータ：白（後攻）"
+            : "あなた：白（後攻）　コンピュータ：黒（先攻）"
+          : "黒：先手　白：後手"}
       </div>
     </div>
   );
