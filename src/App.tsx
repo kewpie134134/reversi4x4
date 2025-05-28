@@ -67,10 +67,7 @@ function App() {
       if (moves.length > 0) {
         let row: number, col: number;
         if (cpuLevel === "easy") {
-          // ランダム
-          [row, col] = moves[Math.floor(Math.random() * moves.length)];
-        } else {
-          // hard: ひっくり返せる数が最大の手を選ぶ
+          // easy: ひっくり返せる数が最大の手を選ぶ
           let max = -1;
           let bestMoves: [number, number][] = [];
           for (const [r, c] of moves) {
@@ -83,6 +80,33 @@ function App() {
             }
           }
           [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        } else {
+          // hard: 角が取れるなら角、なければひっくり返せる数が最大の手
+          const corners: [number, number][] = [
+            [0, 0],
+            [0, board.length - 1],
+            [board.length - 1, 0],
+            [board.length - 1, board.length - 1],
+          ];
+          const cornerMoves = moves.filter(([r, c]) =>
+            corners.some(([cr, cc]) => cr === r && cc === c)
+          );
+          if (cornerMoves.length > 0) {
+            [row, col] = cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
+          } else {
+            let max = -1;
+            let bestMoves: [number, number][] = [];
+            for (const [r, c] of moves) {
+              const flipCount = getFlippable(board, r, c, cpuColor).length;
+              if (flipCount > max) {
+                max = flipCount;
+                bestMoves = [[r, c]];
+              } else if (flipCount === max) {
+                bestMoves.push([r, c]);
+              }
+            }
+            [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+          }
         }
         setTimeout(() => doMove(row, col, cpuColor), 500);
       } else {
