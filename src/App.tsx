@@ -24,7 +24,7 @@ function App() {
   const [animate, setAnimate] = useState(false);
   const [mode, setMode] = useState<Mode>("cpu");
   const [cpuColor, setCpuColor] = useState<"black" | "white">("white");
-  const [cpuLevel, setCpuLevel] = useState<CpuLevel>("easy");
+  const [cpuLevel, setCpuLevel] = useState<CpuLevel>("hard");
 
   const validMoves = getValidMoves(board, currentPlayer);
   const opponent = currentPlayer === "black" ? "white" : "black";

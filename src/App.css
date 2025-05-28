@@ -1,58 +1,188 @@
-/* 盤面を中央に配置し、セル同士の隙間を小さくする */
-.board {
-  display: grid;
-  grid-template-columns: repeat(4, 90px);
-  grid-template-rows: repeat(4, 90px);
-  gap: 2px;
-  justify-content: center;
-  margin: 20px auto;
+/* 全体のスタイル設定 */
+body {
+  background: linear-gradient(135deg, #232526 0%, #414345 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, 'Liberation Sans', sans-serif;
+  margin: 0;
+  color: #f5f5f5;
 }
 
+/* アプリケーションコンテナ */
+.app {
+  max-width: 420px;
+  margin: 40px auto;
+  background: rgba(34, 40, 49, 0.98);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  padding: 32px 28px 24px 28px;
+}
+
+/* 見出し */
+h1 {
+  text-align: center;
+  font-size: 2.1rem;
+  letter-spacing: 2px;
+  margin-bottom: 18px;
+  color: #00adb5;
+  font-weight: 700;
+}
+
+/* ラベル、セレクトボックス、ボタンのフォントサイズ */
+label, select, button {
+  font-size: 1rem;
+}
+
+/* セレクトボックスのスタイル */
+select {
+  background: #232931;
+  color: #f5f5f5;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin-left: 6px;
+  margin-right: 8px;
+  outline: none;
+  transition: background 0.2s;
+}
+
+/* セレクトボックスフォーカス時のスタイル */
+select:focus {
+  background: #393e46;
+}
+
+/* ボタンのスタイル */
+button {
+  background: linear-gradient(90deg, #00adb5 0%, #393e46 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 10px 0 18px 0;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: background 0.2s, transform 0.1s;
+}
+
+/* ボタンホバー時のスタイル */
+button:hover {
+  background: linear-gradient(90deg, #00c6d7 0%, #232931 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* ボードラッパーのスタイル */
+.board-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0 10px 0;
+  padding: 18px;
+  background: rgba(57, 62, 70, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+
+/* 盤面のスタイル */
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 48px);
+  grid-template-rows: repeat(4, 48px);
+  gap: 7px;
+}
+
+/* セルのスタイル */
 .cell {
-  width: 90px;
-  height: 90px;
-  background: #2e8b57;
-  border: 1px solid #222;
+  width: 48px;
+  height: 48px;
+  background: #222831;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  transition: background 0.18s, box-shadow 0.18s;
+  position: relative;
 }
 
+/* 有効なセルのスタイル */
 .cell.valid {
-  box-shadow: 0 0 0 3px #ff0 inset;
-  background: #6fa;
+  background: #00adb5;
+  box-shadow: 0 0 0 3px #00adb5aa;
+  animation: pulse 1.2s infinite;
 }
 
+/* パルスアニメーション */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 3px #00adb5aa; }
+  50% { box-shadow: 0 0 0 7px #00adb544; }
+  100% { box-shadow: 0 0 0 3px #00adb5aa; }
+}
+
+/* 石のスタイル */
 .stone {
-  width: 68px;
-  height: 68px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: #000;
+  background: linear-gradient(145deg, #232526 0%, #393e46 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: 2px solid #393e46;
+  transition: background 0.2s;
 }
 
+/* 白い石のスタイル */
 .stone.white {
-  background: #fff;
-  border: 1px solid #aaa;
+  background: linear-gradient(145deg, #f5f5f5 0%, #bdbdbd 100%);
+  border: 2px solid #e0e0e0;
 }
 
+/* 結果表示のスタイル */
+.result {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #00adb5;
+  margin: 18px 0 0 0;
+  letter-spacing: 1px;
+}
+
+/* スコアボードのスタイル */
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #393e46;
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin: 12px 0 0 0;
+  font-size: 1.1rem;
+  color: #f5f5f5;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+
+/* ゲームオーバーアニメーション */
+.gameover-animate {
+  animation: fadeout 2s;
+}
+
+/* フェードアウトアニメーション */
+@keyframes fadeout {
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+/* 勝者フラッシュアニメーション */
 .board-wrapper.gameover-animate {
   animation: winner-flash 2s;
 }
 
+/* 勝者フラッシュアニメーションのキーフレーム */
 @keyframes winner-flash {
   0%   { box-shadow: 0 0 0px 0px #ffd700; }
   20%  { box-shadow: 0 0 40px 10px #ffd700; }
   50%  { box-shadow: 0 0 80px 20px #ffd700; }
   80%  { box-shadow: 0 0 40px 10px #ffd700; }
   100% { box-shadow: 0 0 0px 0px #ffd700; }
-}
-
-.result {
-  font-size: 2em;
-  font-weight: bold;
-  color: #ffd700;
-  text-align: center;
-  margin-top: 20px;
 }
