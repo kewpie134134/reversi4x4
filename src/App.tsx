@@ -27,6 +27,8 @@ function App() {
   const [cpuLevel, setCpuLevel] = useState<CpuLevel>("easy");
 
   const validMoves = getValidMoves(board, currentPlayer);
+  const opponent = currentPlayer === "black" ? "white" : "black";
+  const opponentValidMoves = getValidMoves(board, opponent);
 
   // 勝敗判定とアニメーション
   useEffect(() => {
@@ -38,6 +40,21 @@ function App() {
       setGameOver(false);
     }
   }, [board]);
+
+  // パス・終了判定
+  useEffect(() => {
+    if (gameOver) return;
+    if (validMoves.length === 0) {
+      if (opponentValidMoves.length === 0) {
+        setGameOver(true);
+        setAnimate(true);
+        setTimeout(() => setAnimate(false), 2000);
+      } else {
+        setCurrentPlayer(opponent);
+      }
+    }
+    // eslint-disable-next-line
+  }, [board, currentPlayer, gameOver]);
 
   // 現在の手番がCPUかどうか
   const isCpuTurn = mode === "cpu" && currentPlayer === cpuColor;
