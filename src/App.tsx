@@ -142,14 +142,13 @@ function App() {
   };
 
   const handleReset = () => {
+    setShowTop(true); // トップ画面に戻る
     setBoard(getInitialBoard());
     setCurrentPlayer("black");
     setScore(countStones(getInitialBoard()));
     setGameOver(false);
     setAnimate(false);
   };
-
-
 
   useEffect(() => {
     // モードやCPU色が変わったらリセット
