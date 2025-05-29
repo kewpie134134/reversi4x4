@@ -187,8 +187,7 @@ function App() {
   return (
     <div className="app">
       <h1>4x4 オセロゲーム</h1>
-      <button onClick={handleReset}>最初から始める</button>
-      <ScoreBoard score={score} currentPlayer={playerName} />
+      <ScoreBoard score={score} currentPlayer={playerName} onReset={handleReset} />
       <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
         <Board
           board={board}
