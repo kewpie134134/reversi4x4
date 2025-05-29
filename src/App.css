@@ -186,3 +186,19 @@ button:hover {
   80%  { box-shadow: 0 0 40px 10px #ffd700; }
   100% { box-shadow: 0 0 0px 0px #ffd700; }
 }
+
+/* コーナーXのスタイル */
+.corner-x {
+  color: #ff5555;
+  font-size: 1.8rem;
+  font-weight: bold;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* コーナーバンのスタイル */
+.corner-ban {
+  background: #393e46 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
