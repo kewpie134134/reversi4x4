@@ -187,11 +187,7 @@ function App() {
   return (
     <div className="app">
       <h1>4x4 オセロゲーム</h1>
-      <button onClick={handleReset}>最初から始める</button>
-      <ScoreBoard score={score} currentPlayer={playerName} />
-      <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
-        ※お互い最初のターンは4つの角にコマを置くことはできません（✕印）。
-      </p>
+      <ScoreBoard score={score} currentPlayer={playerName} onReset={handleReset} />
       <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
         <Board
           board={board}
@@ -200,6 +196,9 @@ function App() {
         />
       </div>
       {gameOver && <div className="result">{resultMsg}</div>}
+      <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
+        ※お互い最初のターンは4つの角にコマを置くことはできません（✕印）。
+      </p>
       <div style={{ marginTop: 10 }}>
         {mode === "cpu"
           ? cpuColor === "white"
