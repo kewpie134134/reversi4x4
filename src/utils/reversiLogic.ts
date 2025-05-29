@@ -80,8 +80,19 @@ export function getValidMoves(
   player: "black" | "white"
 ): [number, number][] {
   const moves: [number, number][] = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
+  const corners = [
+    [0, 0],
+    [0, board.length - 1],
+    [board.length - 1, 0],
+    [board.length - 1, board.length - 1],
+  ];
+  // 盤面に石が5個以下（最初の2ターン）は角禁止
+  const isFirstTwoTurns = board.flat().filter((c) => c !== null).length <= 5;
+
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board.length; c++) {
+      if (isFirstTwoTurns && corners.some(([cr, cc]) => cr === r && cc === c))
+        continue; // 初期は角禁止
       if (getFlippable(board, r, c, player).length > 0) {
         moves.push([r, c]);
       }
