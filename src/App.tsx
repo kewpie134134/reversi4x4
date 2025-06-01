@@ -197,7 +197,7 @@ function App() {
       </div>
       {gameOver && <div className="result">{resultMsg}</div>}
       <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
-        ※お互い最初のターンは4つの角にコマを置くことはできません（✕印）。
+        ※お互い最初のターンは4つの角にコマを置くことはできません。
       </p>
       <div style={{ marginTop: 10 }}>
         {mode === "cpu"
