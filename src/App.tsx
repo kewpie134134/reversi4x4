@@ -18,7 +18,9 @@ type Card = { id: number; name: string };
 
 function App() {
   const [board, setBoard] = useState<BoardType>(getInitialBoard());
-  const [currentPlayer, setCurrentPlayer] = useState<"black" | "white">("black");
+  const [currentPlayer, setCurrentPlayer] = useState<"black" | "white">(
+    "black"
+  );
   const [score, setScore] = useState(countStones(getInitialBoard()));
   const [gameOver, setGameOver] = useState(false);
   const [animate, setAnimate] = useState(false);
@@ -203,7 +205,8 @@ function App() {
             corners.some(([cr, cc]) => cr === r && cc === c)
           );
           if (cornerMoves.length > 0) {
-            [row, col] = cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
+            [row, col] =
+              cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
           } else {
             let max = -1;
             let bestMoves: [number, number][] = [];
@@ -216,7 +219,8 @@ function App() {
                 bestMoves.push([r, c]);
               }
             }
-            [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            [row, col] =
+              bestMoves[Math.floor(Math.random() * bestMoves.length)];
           }
         }
         doMove(row, col, cpuColor);
@@ -307,11 +311,12 @@ function App() {
           </button>
         ))}
         {drawing && (
-          <span style={{ color: "#00adb5", marginLeft: 8 }}>カードをドロー中...</span>
+          <span style={{ color: "#00adb5", marginLeft: 8 }}>
+            カードをドロー中...
+          </span>
         )}
-        {(currentPlayer === "black" ? handBlack : handWhite).length === 0 && !drawing && (
-          <span style={{ color: "#bbb" }}>なし</span>
-        )}
+        {(currentPlayer === "black" ? handBlack : handWhite).length === 0 &&
+          !drawing && <span style={{ color: "#bbb" }}>なし</span>}
       </div>
       <div style={{ margin: "8px 0", display: "flex", alignItems: "center" }}>
         <span style={{ marginRight: 12 }}>黒の捨て札:</span>
@@ -353,7 +358,11 @@ function App() {
         ))}
         {trashWhite.length === 0 && <span style={{ color: "#bbb" }}>なし</span>}
       </div>
-      <ScoreBoard score={score} currentPlayer={playerName} onReset={handleReset} />
+      <ScoreBoard
+        score={score}
+        currentPlayer={playerName}
+        onReset={handleReset}
+      />
       <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
         <Board
           board={board}
