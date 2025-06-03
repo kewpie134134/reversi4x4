@@ -47,7 +47,7 @@ function App() {
   // 「ドロー中」状態を追加
   const [drawing, setDrawing] = useState(false);
 
-  // 山札初期化＆黒白それぞれ2枚ドロー
+  // 山札初期化＆黒白それぞれ手札配布（両者とも初手3枚）
   useEffect(() => {
     if (!showTop) {
       // ユニークなIDを持つカードを生成し、description/rate/noを持たせる
@@ -59,10 +59,10 @@ function App() {
         const j = Math.floor(Math.random() * (i + 1));
         [initialDeck[i], initialDeck[j]] = [initialDeck[j], initialDeck[i]];
       }
-      // ここでsliceで配ることで重複を防ぐ
-      setHandBlack(initialDeck.slice(0, 2));
-      setHandWhite(initialDeck.slice(2, 4));
-      setDeck(initialDeck.slice(4));
+      // 黒・白ともに3枚ずつ配る
+      setHandBlack(initialDeck.slice(0, 3));
+      setHandWhite(initialDeck.slice(3, 6));
+      setDeck(initialDeck.slice(6));
       setTrash([]);
       setCardPlayed(false);
     }
