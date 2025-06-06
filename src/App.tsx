@@ -183,6 +183,8 @@ function App() {
   }
 
   const playerName = currentPlayer === "black" ? "黒" : "白";
+  // 盤面上の石の数でターン数を判定（初期4つなので-4）
+  const turnCount = board.flat().filter((c) => c !== null).length - 4;
 
   return (
     <div className="app">
@@ -196,9 +198,12 @@ function App() {
         />
       </div>
       {gameOver && <div className="result">{resultMsg}</div>}
-      <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
-        ※お互い最初のターンは4つの角にコマを置くことはできません。
-      </p>
+      {/* 3ターン目以降は非表示 */}
+      {turnCount < 2 && (
+        <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
+          ※お互い最初のターンは4つの角にコマを置くことはできません。
+        </p>
+      )}
       <div style={{ marginTop: 10 }}>
         {mode === "cpu"
           ? cpuColor === "white"
