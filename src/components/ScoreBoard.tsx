@@ -7,17 +7,8 @@ type Props = {
 };
 
 const ScoreBoard: React.FC<Props> = ({ currentPlayer, onReset }) => (
-  <div
-    className="score-board"
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-    }}
-  >
-    <button onClick={onReset} style={{ marginRight: "auto" }}>
-      最初から始める
-    </button>
+  <div className="score-board" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <button onClick={onReset} style={{ marginRight: "auto" }}>最初から始める</button>
     <h3 style={{ margin: 0 }}>現在の手番: {currentPlayer}</h3>
   </div>
 );

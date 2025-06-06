@@ -19,20 +19,16 @@ const Board: React.FC<Props> = ({ board, onCellClick, validMoves }) => {
     <div className="board">
       {board.map((row, rIdx) =>
         row.map((cell, cIdx) => {
-          const isCorner = corners.some(
-            ([cr, cc]) => cr === rIdx && cc === cIdx
-          );
-          const isInitial = board.flat().filter((c) => c !== null).length === 4;
+          const isCorner = corners.some(([cr, cc]) => cr === rIdx && cc === cIdx);
+          const isInitial =
+            board.flat().filter((c) => c !== null).length === 4;
           const isValid =
-            validMoves.some(([vr, vc]) => vr === rIdx && vc === cIdx) &&
-            !(isInitial && isCorner);
+            validMoves.some(([vr, vc]) => vr === rIdx && vc === cIdx) && !(isInitial && isCorner);
           const isCornerBan = isFirstTwoTurns && isCorner;
           return (
             <div
               key={`${rIdx}-${cIdx}`}
-              className={`cell${isValid ? " valid" : ""}${
-                isCornerBan ? " corner-ban" : ""
-              }`}
+              className={`cell${isValid ? " valid" : ""}${isCornerBan ? " corner-ban" : ""}`}
               onClick={() => {
                 if (isCornerBan) return;
                 onCellClick(rIdx, cIdx);
@@ -41,9 +37,7 @@ const Board: React.FC<Props> = ({ board, onCellClick, validMoves }) => {
               {isCornerBan ? (
                 <span className="corner-x">✕</span>
               ) : cell ? (
-                <div
-                  className={`stone ${cell === "white" ? "white" : ""}`}
-                ></div>
+                <div className={`stone ${cell === "white" ? "white" : ""}`}></div>
               ) : null}
             </div>
           );

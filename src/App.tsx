@@ -11,16 +11,9 @@ import {
 } from "./utils/reversiLogic";
 import type { BoardType } from "./utils/reversiLogic";
 import Top from "./Top";
-import { CARD_MASTER } from "./cards";
-import type { Card } from "./cards";
 
 type Mode = "human" | "cpu";
 type CpuLevel = "easy" | "hard";
-
-// カード型を拡張
-type ExtendedCard = Card & {
-  id: string;
-};
 
 function App() {
   const [board, setBoard] = useState<BoardType>(getInitialBoard());
@@ -34,39 +27,6 @@ function App() {
   const [cpuColor, setCpuColor] = useState<"black" | "white">("white");
   const [cpuLevel, setCpuLevel] = useState<CpuLevel>("hard");
   const [showTop, setShowTop] = useState(true);
-  const [turnCount, setTurnCount] = useState(0); // 追加
-
-  // カード関連（山札は共通、手札・捨て札は個別）
-  const [deck, setDeck] = useState<ExtendedCard[]>([]);
-  const [handBlack, setHandBlack] = useState<ExtendedCard[]>([]);
-  const [handWhite, setHandWhite] = useState<ExtendedCard[]>([]);
-  const [trash, setTrash] = useState<ExtendedCard[]>([]); // 捨て札（共通）に変更
-  const [cardPlayed, setCardPlayed] = useState(false);
-  const [prevPlayer, setPrevPlayer] = useState<"black" | "white">("black");
-
-  // 「ドロー中」状態を追加
-  const [drawing, setDrawing] = useState(false);
-
-  // 山札初期化＆黒白それぞれ2枚ドロー
-  useEffect(() => {
-    if (!showTop) {
-      // ユニークなIDを持つカードを生成し、description/rate/noを持たせる
-      const initialDeck = CARD_MASTER.map((c) => ({
-        ...c,
-        id: `${c.no}-${Date.now()}-${Math.random()}`, // ユニークIDを付与
-      }));
-      for (let i = initialDeck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [initialDeck[i], initialDeck[j]] = [initialDeck[j], initialDeck[i]];
-      }
-      // ここでsliceで配ることで重複を防ぐ
-      setHandBlack(initialDeck.slice(0, 2));
-      setHandWhite(initialDeck.slice(2, 4));
-      setDeck(initialDeck.slice(4));
-      setTrash([]);
-      setCardPlayed(false);
-    }
-  }, [showTop]);
 
   const validMoves = getValidMoves(board, currentPlayer);
   const opponent = currentPlayer === "black" ? "white" : "black";
@@ -101,155 +61,15 @@ function App() {
   // 現在の手番がCPUかどうか
   const isCpuTurn = mode === "cpu" && currentPlayer === cpuColor;
 
-  // ドロー処理を関数化
-  const drawCard = (player: "black" | "white") => {
-    if (deck.length === 0) return;
-    const card = deck[0];
-    setDeck((prev) => prev.slice(1));
-    if (player === "black") {
-      setHandBlack((prev) => [...prev, card]);
-    } else {
-      setHandWhite((prev) => [...prev, card]);
-    }
-  };
-
-  // 自分のターン開始時に1秒待ってから1枚ドロー（共通山札）
+  // コンピュータの自動手番
   useEffect(() => {
-    if (showTop || gameOver) return;
-    if (prevPlayer !== currentPlayer && !cardPlayed) {
-      setDrawing(true);
-      const timer = setTimeout(() => {
-        drawCard(currentPlayer);
-        setDrawing(false);
-      }, 1000);
-      setPrevPlayer(currentPlayer);
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line
-  }, [currentPlayer, showTop, gameOver]);
-
-  // カードを出す（人間プレイヤー専用）
-  const handlePlayCard = (cardId: string) => {
-    if (cardPlayed || gameOver || drawing) return; // ドロー中は出せない
-    let card: ExtendedCard | undefined;
-    if (currentPlayer === "black") {
-      card = handBlack.find((c) => c.id === cardId);
-      setHandBlack((prev) => prev.filter((c) => c.id !== cardId));
-    } else {
-      card = handWhite.find((c) => c.id === cardId);
-      setHandWhite((prev) => prev.filter((c) => c.id !== cardId));
-    }
-    // 重複チェック不要（人間は1回しか出せない）
-    if (card) {
-      setTrash((prev) => [...prev, card]);
-    }
-    setCardPlayed(true);
-  };
-
-  // 共通の手番処理
-  const doMove = (row: number, col: number, player: "black" | "white") => {
-    if (!cardPlayed) return; // カードを出していないと置けない
-    const toFlip = getFlippable(board, row, col, player);
-    if (toFlip.length === 0) return;
-
-    const newBoard = board.map((r) => r.slice());
-    newBoard[row][col] = player;
-    toFlip.forEach(([r, c]) => {
-      newBoard[r][c] = player;
-    });
-    setBoard(newBoard);
-    setScore(countStones(newBoard));
-    setCurrentPlayer(player === "black" ? "white" : "black");
-    setCardPlayed(false); // 次のターンのためリセット
-    setTurnCount((prev) => prev + 1); // ← 追加
-  };
-
-  // クリック時
-  const handleCellClick = (row: number, col: number) => {
     if (gameOver) return;
-    if (isCpuTurn) return; // CPUの手番はクリック不可
-    doMove(row, col, currentPlayer);
-  };
-
-  // CPUがカードを出す処理（手札・捨て札を同時に更新）
-  const cpuPlayCard = (color: "black" | "white") => {
-    let card: ExtendedCard | undefined;
-    if (color === "white") {
-      setHandWhite((prev) => {
-        card = prev[0];
-        return prev.slice(1);
-      });
-    } else {
-      setHandBlack((prev) => {
-        card = prev[0];
-        return prev.slice(1);
-      });
-    }
-    // setStateの直後だとcardがundefinedになる場合があるので、setTimeoutで次のtickで追加
-    setTimeout(() => {
-      if (card) setTrash((prevTrash) => [...prevTrash, card!]);
-      setCardPlayed(true);
-    }, 0);
-  };
-
-  // CPUの自動手番（カードを出してからコマを置く）
-  useEffect(() => {
-    if (!isCpuTurn || gameOver || showTop) return;
-    if (drawing) return;
-    // 手札がなければドローしてからreturn（次のuseEffectで再度CPU手番が動く）
-    if (
-      (cpuColor === "white" && handWhite.length === 0) ||
-      (cpuColor === "black" && handBlack.length === 0)
-    ) {
-      if (deck.length > 0) drawCard(cpuColor);
-      return;
-    }
-
-    // 1ターンに1回だけカードを出す
-    if (!cardPlayed) {
-      cpuPlayCard(cpuColor);
-      return;
-    }
-
-    // カードを出した後、石を置く
-    setTimeout(() => {
+    if (isCpuTurn) {
       const moves = getValidMoves(board, cpuColor);
-      if (moves.length === 0) {
-        setCurrentPlayer(cpuColor === "black" ? "white" : "black");
-        setCardPlayed(false);
-        return;
-      }
-
-      let row: number, col: number;
-      if (cpuLevel === "easy") {
-        // ひっくり返せる数が最大の手
-        let max = -1;
-        let bestMoves: [number, number][] = [];
-        for (const [r, c] of moves) {
-          const flipCount = getFlippable(board, r, c, cpuColor).length;
-          if (flipCount > max) {
-            max = flipCount;
-            bestMoves = [[r, c]];
-          } else if (flipCount === max) {
-            bestMoves.push([r, c]);
-          }
-        }
-        [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-      } else {
-        // hard: 角優先
-        const corners: [number, number][] = [
-          [0, 0],
-          [0, board.length - 1],
-          [board.length - 1, 0],
-          [board.length - 1, board.length - 1],
-        ];
-        const cornerMoves = moves.filter(([r, c]) =>
-          corners.some(([cr, cc]) => cr === r && cc === c)
-        );
-        if (cornerMoves.length > 0) {
-          [row, col] =
-            cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
-        } else {
+      if (moves.length > 0) {
+        let row: number, col: number;
+        if (cpuLevel === "easy") {
+          // easy: ひっくり返せる数が最大の手を選ぶ
           let max = -1;
           let bestMoves: [number, number][] = [];
           for (const [r, c] of moves) {
@@ -262,37 +82,72 @@ function App() {
             }
           }
           [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        } else {
+          // hard: 角が取れるなら角、なければひっくり返せる数が最大の手
+          const corners: [number, number][] = [
+            [0, 0],
+            [0, board.length - 1],
+            [board.length - 1, 0],
+            [board.length - 1, board.length - 1],
+          ];
+          const cornerMoves = moves.filter(([r, c]) =>
+            corners.some(([cr, cc]) => cr === r && cc === c)
+          );
+          if (cornerMoves.length > 0) {
+            [row, col] = cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
+          } else {
+            let max = -1;
+            let bestMoves: [number, number][] = [];
+            for (const [r, c] of moves) {
+              const flipCount = getFlippable(board, r, c, cpuColor).length;
+              if (flipCount > max) {
+                max = flipCount;
+                bestMoves = [[r, c]];
+              } else if (flipCount === max) {
+                bestMoves.push([r, c]);
+              }
+            }
+            [row, col] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+          }
         }
+        setTimeout(() => doMove(row, col, cpuColor), 500);
+      } else {
+        // パス
+        setCurrentPlayer(cpuColor === "black" ? "white" : "black");
       }
-      doMove(row, col, cpuColor);
-    }, 600); // カードを出してから少し待つ
+    }
     // eslint-disable-next-line
-  }, [
-    isCpuTurn,
-    handBlack,
-    handWhite,
-    board,
-    gameOver,
-    showTop,
-    cpuLevel,
-    drawing,
-    cardPlayed, // 追加
-  ]);
+  }, [currentPlayer, board, gameOver, mode, cpuColor, cpuLevel]);
+
+  // 共通の手番処理
+  const doMove = (row: number, col: number, player: "black" | "white") => {
+    const toFlip = getFlippable(board, row, col, player);
+    if (toFlip.length === 0) return;
+
+    const newBoard = board.map((r) => r.slice());
+    newBoard[row][col] = player;
+    toFlip.forEach(([r, c]) => {
+      newBoard[r][c] = player;
+    });
+    setBoard(newBoard);
+    setScore(countStones(newBoard));
+    setCurrentPlayer(player === "black" ? "white" : "black");
+  };
+
+  // クリック時
+  const handleCellClick = (row: number, col: number) => {
+    if (gameOver) return;
+    if (isCpuTurn) return; // CPUの手番はクリック不可
+    doMove(row, col, currentPlayer);
+  };
 
   const handleReset = () => {
-    setShowTop(true);
+    setShowTop(true); // トップ画面に戻る
     setBoard(getInitialBoard());
     setCurrentPlayer("black");
     setScore(countStones(getInitialBoard()));
     setGameOver(false);
     setAnimate(false);
-    setDeck([]);
-    setHandBlack([]);
-    setHandWhite([]);
-    setTrash([]); // 共通捨て札をリセット
-    setCardPlayed(false);
-    setDrawing(false); // ← 追加：ドロー中状態もリセット
-    setTurnCount(0); // ← 追加：ターン数もリセット
   };
 
   useEffect(() => {
@@ -302,11 +157,6 @@ function App() {
     setScore(countStones(getInitialBoard()));
     setGameOver(false);
     setAnimate(false);
-    setDeck([]);
-    setHandBlack([]);
-    setHandWhite([]);
-    setTrash([]); // 共通捨て札をリセット
-    setCardPlayed(false);
   }, [mode, cpuColor]);
 
   // トップページ
@@ -337,70 +187,7 @@ function App() {
   return (
     <div className="app">
       <h1>4x4 オセロゲーム</h1>
-      <div style={{ marginBottom: 8, textAlign: "right", color: "#00adb5" }}>
-        山札: {deck.length}枚
-      </div>
-      <div style={{ margin: "16px 0", display: "flex", alignItems: "center" }}>
-        <span style={{ marginRight: 12 }}>
-          {currentPlayer === "black" ? "黒" : "白"}の手札:
-        </span>
-        {(currentPlayer === "black" ? handBlack : handWhite).map((card) => (
-          <button
-            key={card.id}
-            style={{
-              background: "#fff",
-              color: "#222",
-              borderRadius: 8,
-              padding: "6px 12px",
-              marginRight: 8,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.10)",
-              fontWeight: "bold",
-              opacity: !cardPlayed && !drawing ? 1 : 0.7,
-              cursor: cardPlayed || drawing ? "not-allowed" : "pointer",
-            }}
-            disabled={cardPlayed || drawing}
-            onClick={() => handlePlayCard(card.id)}
-          >
-            {card.name}
-            <div style={{ fontSize: "0.8em", color: "#888" }}>
-              {card.description} | レート: {card.rate} | No: {card.no}
-            </div>
-          </button>
-        ))}
-        {drawing && (
-          <span style={{ color: "#00adb5", marginLeft: 8 }}>
-            カードをドロー中...
-          </span>
-        )}
-        {(currentPlayer === "black" ? handBlack : handWhite).length === 0 &&
-          !drawing && <span style={{ color: "#bbb" }}>なし</span>}
-      </div>
-      {/* 捨て札表示 */}
-      <div style={{ margin: "8px 0", display: "flex", alignItems: "center" }}>
-        <span style={{ marginRight: 12 }}>捨て札:</span>
-        {trash.map((card) => (
-          <span
-            key={card.id}
-            style={{
-              background: "#eee",
-              color: "#888",
-              borderRadius: 8,
-              padding: "4px 10px",
-              marginRight: 6,
-              fontSize: "0.95em",
-              border: "1px solid #ccc",
-            }}
-          >
-            {card.name}（No:{card.no} / Rate:{card.rate}）
-          </span>
-        ))}
-        {trash.length === 0 && <span style={{ color: "#bbb" }}>なし</span>}
-      </div>
-      <ScoreBoard
-        score={score}
-        currentPlayer={playerName}
-        onReset={handleReset}
-      />
+      <ScoreBoard score={score} currentPlayer={playerName} onReset={handleReset} />
       <div className={`board-wrapper${animate ? " gameover-animate" : ""}`}>
         <Board
           board={board}
@@ -409,11 +196,9 @@ function App() {
         />
       </div>
       {gameOver && <div className="result">{resultMsg}</div>}
-      {turnCount < 2 && ( // ← 2ターン未満のときだけ表示
-        <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
-          ※お互い最初のターンは4つの角にコマを置くことはできません。
-        </p>
-      )}
+      <p style={{ color: "#ff5555", textAlign: "center", marginBottom: 10 }}>
+        ※お互い最初のターンは4つの角にコマを置くことはできません。
+      </p>
       <div style={{ marginTop: 10 }}>
         {mode === "cpu"
           ? cpuColor === "white"
