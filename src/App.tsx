@@ -363,7 +363,7 @@ function App() {
           >
             {card.name}
             <div style={{ fontSize: "0.8em", color: "#888" }}>
-              {card.description} | レート: {card.rate} | No: {card.no}
+              {card.description} 
             </div>
           </button>
         ))}
@@ -391,7 +391,7 @@ function App() {
               border: "1px solid #ccc",
             }}
           >
-            {card.name}（No:{card.no} / Rate:{card.rate}）
+            {card.name}
           </span>
         ))}
         {trash.length === 0 && <span style={{ color: "#bbb" }}>なし</span>}
